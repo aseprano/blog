@@ -1,21 +1,10 @@
 import { InvalidAuthorIdException } from '../exceptions/InvalidAuthorIdException';
+import { AbstractId } from './AbstractId';
 
-export class AuthorId {
-  public constructor(private readonly id: number) {
-    this.checkIsValidAuthorId(id);
-  }
-
-  private checkIsValidAuthorId(id: unknown): void {
-    if (typeof id !== 'number' || !Number.isInteger(id) || id < 1) {
+export class AuthorId extends AbstractId {
+  protected checkIsValidId(id: unknown): void {
+    if (!this.isValidNumericId(id)) {
       throw new InvalidAuthorIdException(`Invalid author id`);
     }
-  }
-
-  public asNumber(): number {
-    return this.id;
-  }
-
-  public toString(): string {
-    return `${this.asNumber()}`;
   }
 }
