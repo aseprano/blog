@@ -58,6 +58,7 @@ export class PostsApplicationService {
 
     do {
       const post = await this.repository.getById(command.id);
+
       post.updateProperties(command.properties);
 
       try {

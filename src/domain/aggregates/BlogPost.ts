@@ -43,7 +43,13 @@ export class BlogPost {
 
   public updateProperties(newContent: Partial<BlogPostProperties>): void {
     for (const property of Object.keys(newContent)) {
-      this.properties[property] = newContent[property];
+      const newValue = newContent[property];
+
+      if (!newValue) {
+        continue;
+      }
+
+      this.properties[property] = newValue;
     }
   }
 }
