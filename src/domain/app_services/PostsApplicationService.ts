@@ -76,6 +76,9 @@ export class PostsApplicationService {
     } while (true);
   }
 
+  /**
+   * @throws BlogPostNotFoundException
+   */
   public async delete(command: DeleteBlogPostCommand): Promise<void> {
     return this.repository.delete(command.id);
   }
