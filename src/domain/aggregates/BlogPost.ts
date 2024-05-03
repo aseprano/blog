@@ -47,7 +47,7 @@ export class BlogPost {
     for (const property of Object.keys(newContent)) {
       const newValue = newContent[property];
 
-      if (!newValue) {
+      if (newValue === undefined) {
         continue;
       }
 

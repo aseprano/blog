@@ -56,4 +56,32 @@ describe('BlogPost', () => {
     expect(post.Category.asNumber()).toEqual(101);
     // ...
   });
+
+  it('Can be partially updated', () => {
+    const blogPost = new BlogPost(
+      new PostId(111),
+      {
+        title: new PostTitle('Another brick in the wall'),
+        content: new PostContent("We don't need no education"),
+        pictureUrl: new PictureUrl('https://www.flickr.com/herr-doktor/image.png'),
+        category: new CategoryId(101),
+        tags: TagList.parse(['songs', 'lyrics']),
+      },
+      42,
+    );
+
+    blogPost.updateProperties({
+      title: undefined,
+      pictureUrl: new PictureUrl('https://www.flickr.com/herr-doktor/image2.png'),
+    });
+
+    expect(blogPost.Title.asString()).toEqual('Another brick in the wall');
+    expect(blogPost.Content.asString()).toEqual("We don't need no education");
+    expect(blogPost.PictureUrl.asString()).toEqual('https://www.flickr.com/herr-doktor/image2.png');
+    expect(blogPost.Category.asNumber()).toEqual(101);
+    expect(blogPost.TagList.items).toEqual([
+      new Tag('songs'),
+      new Tag('lyrics'),
+    ]);
+  });
 });
