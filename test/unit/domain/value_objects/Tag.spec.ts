@@ -22,4 +22,19 @@ describe('Tag', () => {
     const tag = new Tag(value);
     expect(tag.asString()).toEqual(value);
   });
+
+  it('Converts the tag to lowercase', () => {
+    const tag = new Tag('FooBar');
+    expect(tag.asString()).toEqual('foobar');
+  });
+
+  it('Can check another tag for equality', () => {
+    const t1 = new Tag('foo');
+    const t2 = new Tag('Foo');
+    const t3 = new Tag('Bar');
+
+    expect(t1.equals(t1)).toBeTruthy();
+    expect(t1.equals(t2)).toBeTruthy();
+    expect(t1.equals(t3)).toBeFalsy();
+  });
 });

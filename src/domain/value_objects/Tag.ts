@@ -3,6 +3,7 @@ import { InvalidTagException } from '../exceptions/InvalidTagException';
 export class Tag {
   public constructor(private readonly tag: string) {
     this.checkIsValidTag(tag);
+    this.tag = tag.toLowerCase();
   }
 
   private checkIsValidTag(tag: unknown): void {
@@ -17,5 +18,9 @@ export class Tag {
 
   public toString(): string {
     return this.asString();
+  }
+
+  public equals(other: Tag): boolean {
+    return other && (this === other || this.tag === other.tag);
   }
 }
