@@ -1,73 +1,64 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+## Web blog project
+The aim of this project is to make it even easier to fill internet with garbage. Are you tired of Facebook, Twitter (now X), Instagram? Do you feel like you miss the old days when Blogspot or MSN ruled the world?
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Don't worry. This blog will make you like you are in the 90s!
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+### How to start it
+You need [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/install/) installed on your machine.
+After installing them, just CD into this project folder and then run:
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
-
-```bash
-$ npm install
+```shell
+$ docker-compose up -d
 ```
 
-## Running the app
+### How to run tests in your local environment
+This project is based on TypeScript and Node.js (20+).
+You can either install it in your local environment, or just use docker. The easiest way is to use Docker and mount this folder in it:
 
-```bash
-# development
-$ npm run start
+```shell
+docker run --rm -it -v.:/home/node node:20-alpine sh
+```
+After mounting this folder into a node 20 docker container, just run the following command to move to the folder where the code has been mounted and install the project's dependencies:
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```shell
+cd /home/node
+npm i
 ```
 
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+Then, you can run the unit tests with the following:
+```shell
+npm run test:unit 
 ```
 
-## Support
+Alternatively, in order to see the coverage of the project, you can run the following:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```shell
+npm run test:cov
+```
 
-## Stay in touch
+### How to use the web blog
+The blog listens on the port 8090 (you can change it by means of the PORT environment variable in the docker-compose.yml file).
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+You can open the browser to the following address to see the swagger API documentation:
 
-## License
+```text
+http://localhost:8090/api
+```
+## Missing parts
+As of now, it just uses a bare mysql database, not really thought to be used at scale. It's just a demo, I wanted to show the use of DDD in the project, and how I'd organize the codebase.
 
-Nest is [MIT licensed](LICENSE).
+In a real project, with some real deadline and requirements, I'd rather design it in a better way with the following in mind:
+
+- Possibility to use different models for commands and queries
+- An ad-hoc model for full-text search or tags search (surely, I'd invest more time to think about a set of models for queries)
+- A real event distribution mechanism (like Kafka, or RabbitMQ or the like)
+- Some architectural components to project events to different models (based on the queries that we'd like to offer, see previous point)
+- Some ORM or the like (in order to make SQL queries easier to write)
+- A way to perform migrations
+- Some CDK/Terraform/WhateverYouLike mechanism to make it deployable
+- A sample CI/CD pipeline to build/test/run coverage/push results (i.e.: to kondukto or other security code analyzers)
+- Some integration with DataDog/Loggly to better monitor the app
+- A database connection pool (the library I use already provides a pool, but generally I like to hide its implementation) (nothing fancy, just a decorator that implements the Queryable abstraction or something similar)
+- Last but not least, a better swagger documentation
+
+I know that it looks like a very long list of ifs and buts, but I had a few hard days and little-to-no time to work on this project (aside from night).
