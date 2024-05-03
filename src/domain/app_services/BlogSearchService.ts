@@ -1,6 +1,5 @@
 import { Queryable } from '../../service/Queryable';
 import { BlogPostNotFoundException } from '../exceptions/BlogPostNotFoundException';
-import { escape } from 'mysql2';
 
 export interface SearchParams {
   readonly title?: string;
@@ -17,7 +16,18 @@ export interface BlogPostDTO {
     readonly id: number;
     readonly label: string;
   };
-  readonly tags: readonly string[];
+  readonly tags?: readonly string[];
+}
+
+export interface BlogSearchResultItem {
+  readonly id: number;
+  readonly title: string;
+  readonly picture_url: string,
+  readonly content: string;
+}
+
+export interface BlogSearchResult {
+  readonly posts: readonly BlogSearchResultItem[];
 }
 
 export class BlogSearchService {
@@ -50,7 +60,7 @@ export class BlogSearchService {
     };
   }
 
-  public async search(params: SearchParams): Promise<readonly BlogPostDTO[]> {
+  public async search(params: SearchParams): Promise<BlogSearchResult> {
     let sql = 'SELECT p.* FROM posts p';
     const queryParams = [];
 
@@ -69,6 +79,15 @@ export class BlogSearchService {
       queryParams.push(`%${params.title}%`);
     }
 
-    return await this.conn.query(sql, queryParams);
+    sql += ` ORDER BY p.id ASC`;
+
+    const rows = await this.conn.query(sql, queryParams);
+
+    return rows.map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      content: row.content,
+      picture_url: row.picture_url,
+    }));
   }
 }
