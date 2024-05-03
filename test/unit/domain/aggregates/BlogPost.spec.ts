@@ -15,7 +15,7 @@ describe('BlogPost', () => {
         content: new PostContent('Lorem ipsum dolor sit amet'),
         pictureUrl: new PictureUrl('https://www.flickr.com/herr-doktor/image.png'),
         category: new CategoryId(100),
-        tags: new TagList(['random']),
+        tags: TagList.parse(['random']),
       },
       10,
     );
@@ -37,7 +37,7 @@ describe('BlogPost', () => {
         content: new PostContent('Lorem ipsum dolor sit amet'),
         pictureUrl: new PictureUrl('https://www.flickr.com/herr-doktor/image.png'),
         category: new CategoryId(101),
-        tags: new TagList(['random', 'physics']),
+        tags: TagList.parse(['random', 'physics']),
       },
       12,
     );

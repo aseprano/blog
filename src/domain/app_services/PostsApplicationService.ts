@@ -10,11 +10,11 @@ import { VersionMismatchException } from '../exceptions/VersionMismatchException
 import { ConcurrentUpdatesException } from '../exceptions/ConcurrentUpdatesException';
 
 export interface BlogPostProperties {
-  readonly title: PostTitle;
-  readonly content: PostContent;
-  readonly pictureUrl: PictureUrl;
-  readonly category: CategoryId;
-  readonly tags: TagList;
+  title: PostTitle;
+  content: PostContent;
+  pictureUrl: PictureUrl;
+  category: CategoryId;
+  tags: TagList;
 }
 
 export interface CreateBlogPostCommand {
@@ -30,6 +30,11 @@ export interface DeleteBlogPostCommand {
   readonly id: PostId;
 }
 
+export interface AlterTagsCommand {
+  readonly id: PostId;
+  readonly tags: TagList;
+}
+
 export class PostsApplicationService {
   private MAX_RETRIES = 3;
 
@@ -37,6 +42,41 @@ export class PostsApplicationService {
 
   private async wait(millis: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, millis));
+  }
+
+  /**
+   * Loads a post, provides a callback mechanism to update its content and
+   * tries to store the changes.
+   * Encapsulates the optimistic-lock retry mechanism
+   *
+   * @param id The id of the post to edit
+   * @param callback The callback that uses the post to perform changes
+   *
+   * @throws ConcurrentUpdatesException
+   */
+  private async performOnPost(
+    id: PostId,
+    callback: (post: BlogPost) => Promise<void>,
+  ): Promise<void> {
+    let attempts = 1;
+
+    do {
+      const post = await this.repository.getById(id);
+      await callback(post);
+
+      try {
+        return await this.repository.update(post);
+      } catch (exception: any) {
+        if (!(exception instanceof VersionMismatchException)) {
+          throw exception;
+        } else if (attempts >= this.MAX_RETRIES) {
+          throw new ConcurrentUpdatesException();
+        }
+
+        ++attempts;
+        await this.wait(100);
+      }
+    } while (true);
   }
 
   /**
@@ -54,26 +94,34 @@ export class PostsApplicationService {
    * @throws ConcurrentUpdatesException
    */
   public async update(command: UpdateBlogPostCommand): Promise<void> {
-    let attempts = 1;
+    return this.performOnPost(command.id, async (post) =>
+      post.updateProperties(command.properties),
+    );
+  }
 
-    do {
-      const post = await this.repository.getById(command.id);
+  /**
+   * Adds a list of tags to a post
+   *
+   * @throws BlogPostNotFoundException
+   * @throws ConcurrentUpdatesException
+   */
+  public async addTags(command: AlterTagsCommand): Promise<void> {
+    return this.performOnPost(command.id, async (post) =>
+      post.addTags(command.tags),
+    );
+  }
 
-      post.updateProperties(command.properties);
-
-      try {
-        return await this.repository.update(post);
-      } catch (exception: any) {
-        if (!(exception instanceof VersionMismatchException)) {
-          throw exception;
-        } else if (attempts >= this.MAX_RETRIES) {
-          throw new ConcurrentUpdatesException();
-        }
-
-        ++attempts;
-        await this.wait(100);
-      }
-    } while (true);
+  /**
+   * Removes a list of tags from a post
+   *
+   * @throws BlogPostNotFoundException
+   * @throws InvalidNumberOfTagsException if all the tags have been removed from the post
+   * @throws ConcurrentUpdatesException
+   */
+  public async removeTags(command: AlterTagsCommand): Promise<void> {
+    return this.performOnPost(command.id, async (post) =>
+      post.removeTags(command.tags),
+    );
   }
 
   /**

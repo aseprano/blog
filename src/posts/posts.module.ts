@@ -3,7 +3,7 @@ import { PostsController } from './posts.controller';
 import { PostsApplicationService } from '../domain/app_services/PostsApplicationService';
 import { createConnection } from 'mysql2';
 import * as process from 'node:process';
-import { MySQLPostsRepository } from '../domain/repositories/MySQLPostsRepository';
+import { MySQLPostsRepository } from '../domain/repositories/impl/MySQLPostsRepository';
 import { DBConnection } from '../service/impl/DBConnection';
 
 @Module({

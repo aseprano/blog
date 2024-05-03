@@ -5,6 +5,8 @@ import { PostContent } from '../value_objects/PostContent';
 import { PictureUrl } from '../value_objects/PictureUrl';
 import { CategoryId } from '../value_objects/CategoryId';
 import { TagList } from '../value_objects/TagList';
+import { InvalidTagListException } from '../exceptions/InvalidTagListException';
+import { InvalidNumberOfTagsException } from '../exceptions/InvalidNumberOfTagsException';
 
 export class BlogPost {
   public constructor(
@@ -50,6 +52,27 @@ export class BlogPost {
       }
 
       this.properties[property] = newValue;
+    }
+  }
+
+  public addTags(newTags: TagList): void {
+    this.properties.tags = this.properties.tags.append(newTags);
+  }
+
+  /**
+   * Removes a list of tas from the post
+   *
+   * @throws InvalidNumberOfTagsException if the request removes all the tags
+   */
+  public removeTags(tags: TagList): void {
+    try {
+      this.properties.tags = this.properties.tags.remove(tags);
+    } catch (error: any) {
+      if (error instanceof InvalidTagListException) {
+        throw new InvalidNumberOfTagsException();
+      }
+
+      throw error;
     }
   }
 }

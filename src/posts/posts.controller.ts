@@ -10,6 +10,8 @@ import {
   Logger,
   NotFoundException,
   ConflictException,
+  BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PostsApplicationService } from '../domain/app_services/PostsApplicationService';
 import { PostTitle } from '../domain/value_objects/PostTitle';
@@ -28,6 +30,7 @@ import { ConcurrentUpdatesException } from '../domain/exceptions/ConcurrentUpdat
 import { RolesGuard } from '../roles/roles.guard';
 import { AllowedRoles } from '../guards/roles.decorator';
 import * as Roles from '../guards/roles.decorator';
+import { InvalidNumberOfTagsException } from '../domain/exceptions/InvalidNumberOfTagsException';
 
 @Controller('posts')
 @UseGuards(RolesGuard)
@@ -48,7 +51,7 @@ export class PostsController {
           content: new PostContent(body.content),
           pictureUrl: new PictureUrl(body.picture_url),
           category: new CategoryId(body.id_category),
-          tags: new TagList(body.tags),
+          tags: TagList.parse(body.tags),
         },
       });
 
@@ -89,7 +92,7 @@ export class PostsController {
           content: body.content ? new PostContent(body.content) : undefined,
           pictureUrl: body.picture_url ? new PictureUrl(body.picture_url) : undefined,
           category: body.id_category ? new CategoryId(body.id_category) : undefined,
-          tags: body.tags ? new TagList(body.tags) : undefined,
+          tags: body.tags ? TagList.parse(body.tags) : undefined,
         },
       });
     } catch (error: any) {
@@ -115,6 +118,65 @@ export class PostsController {
     } catch (error: any) {
       if (error instanceof BlogPostNotFoundException) {
         throw new NotFoundException(`Post not found`);
+      }
+
+      throw error;
+    }
+  }
+
+  @Post('/:id(\\d+)/tags')
+  async addTags(
+    @Param('id') id: string,
+    @Body() body: any,
+  ): Promise<any> {
+    try {
+      const postId = new PostId(Number(id));
+      const tags = TagList.parse(body.tags);
+
+      this.logger.debug(`Wanna add the following tags to post ${postId}: ${tags}`);
+
+      await this.posts.addTags({
+        id: postId,
+        tags,
+      });
+    } catch (error: any) {
+      if (error instanceof InvalidTagListException) {
+        throw new BadRequestException(error.message);
+      } else if (error instanceof BlogPostNotFoundException) {
+        throw new NotFoundException(`Post not found`);
+      } else if (error instanceof ConcurrentUpdatesException) {
+        throw new ConflictException();
+      }
+
+      throw error;
+    }
+  }
+
+  @Delete('/:id(\\d+)/tags')
+  async removeTagsFromPost(
+    @Param('id') id: string,
+    @Body() body: any,
+  ): Promise<any> {
+    const postId = new PostId(Number(id));
+    this.logger.debug(`Wanna delete some tags from post ${postId}`);
+
+    const tagsToRemove = TagList.parse(body.tags);
+    this.logger.debug(`Tags to remove: ${tagsToRemove}`);
+
+    try {
+      await this.posts.removeTags({
+        id: postId,
+        tags: tagsToRemove,
+      });
+    } catch (error: any) {
+      if (error instanceof InvalidTagListException) {
+        throw new BadRequestException(error.message);
+      } else if (error instanceof BlogPostNotFoundException) {
+        throw new NotFoundException(`Post not found`);
+      } else if (error instanceof InvalidNumberOfTagsException) {
+        throw new ForbiddenException(`A post must contain at least one tag`);
+      } else if (error instanceof ConcurrentUpdatesException) {
+        throw new ConflictException();
       }
 
       throw error;

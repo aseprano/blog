@@ -1,15 +1,15 @@
-import { BlogPost } from '../aggregates/BlogPost';
-import { PostId } from '../value_objects/PostId';
-import { BlogPostsRepository } from './BlogPostsRepository';
-import { PostTitle } from '../value_objects/PostTitle';
-import { BlogPostNotFoundException } from '../exceptions/BlogPostNotFoundException';
-import { PictureUrl } from '../value_objects/PictureUrl';
-import { CategoryId } from '../value_objects/CategoryId';
-import { TagList } from '../value_objects/TagList';
-import { PostContent } from '../value_objects/PostContent';
-import { DBConnection } from '../../service/impl/DBConnection';
-import { VersionMismatchException } from '../exceptions/VersionMismatchException';
-import { DBTransaction } from '../../service/impl/DBTransaction';
+import { BlogPost } from '../../aggregates/BlogPost';
+import { PostId } from '../../value_objects/PostId';
+import { BlogPostsRepository } from '../BlogPostsRepository';
+import { PostTitle } from '../../value_objects/PostTitle';
+import { BlogPostNotFoundException } from '../../exceptions/BlogPostNotFoundException';
+import { PictureUrl } from '../../value_objects/PictureUrl';
+import { CategoryId } from '../../value_objects/CategoryId';
+import { TagList } from '../../value_objects/TagList';
+import { PostContent } from '../../value_objects/PostContent';
+import { DBConnection } from '../../../service/impl/DBConnection';
+import { VersionMismatchException } from '../../exceptions/VersionMismatchException';
+import { DBTransaction } from '../../../service/impl/DBTransaction';
 
 export class MySQLPostsRepository implements BlogPostsRepository {
   public constructor(private readonly conn: DBConnection) {}
@@ -56,7 +56,7 @@ export class MySQLPostsRepository implements BlogPostsRepository {
         content: new PostContent(post.content),
         pictureUrl: new PictureUrl(post.picture_url),
         category: new CategoryId(post.id_category),
-        tags: new TagList(tags.map((row: any) => row.tag)),
+        tags: TagList.parse(tags.map((row: any) => row.tag)),
       },
       post.version,
     );
@@ -103,8 +103,6 @@ export class MySQLPostsRepository implements BlogPostsRepository {
           post.Version,
         ],
       );
-
-      console.log(result);
 
       if (!result.affectedRows) {
         throw new VersionMismatchException(
