@@ -8,6 +8,10 @@ import { BlogPostsRepository } from '../repositories/BlogPostsRepository';
 import { BlogPost } from '../aggregates/BlogPost';
 import { VersionMismatchException } from '../exceptions/VersionMismatchException';
 import { ConcurrentUpdatesException } from '../exceptions/ConcurrentUpdatesException';
+import { EventDispatcher } from '../../service/EventDispatcher';
+import { PostCreated } from '../events/PostCreated';
+import { PostBoundToCategory } from '../events/PostBoundToCategory';
+import { TagsAddedToPost } from '../events/TagsAddedToPost';
 
 export interface BlogPostProperties {
   title: PostTitle;
@@ -38,7 +42,10 @@ export interface AlterTagsCommand {
 export class PostsApplicationService {
   private MAX_RETRIES = 3;
 
-  public constructor(private readonly repository: BlogPostsRepository) {}
+  public constructor(
+    private readonly repository: BlogPostsRepository,
+    private readonly eventDispatcher: EventDispatcher,
+  ) {}
 
   private async wait(millis: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, millis));
@@ -84,7 +91,15 @@ export class PostsApplicationService {
    */
   public async create(command: CreateBlogPostCommand): Promise<PostId> {
     const post = new BlogPost(undefined, command.properties);
-    return this.repository.add(post);
+    const postId = await this.repository.add(post);
+
+    await this.eventDispatcher.dispatch([
+      new PostCreated(postId, post.Title, post.Content),
+      new PostBoundToCategory(postId, post.Category),
+      new TagsAddedToPost(postId, post.TagList),
+    ]);
+
+    return postId;
   }
 
   /**

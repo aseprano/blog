@@ -2,9 +2,12 @@ import { ConsoleLogger, Logger, Module, Scope } from '@nestjs/common';
 import { PostsController } from './posts.controller';
 import { PostsApplicationService } from '../domain/app_services/PostsApplicationService';
 import { createConnection } from 'mysql2';
-import * as process from 'node:process';
 import { MySQLPostsRepository } from '../domain/repositories/impl/MySQLPostsRepository';
 import { DBConnection } from '../service/impl/DBConnection';
+import { EventDispatcher } from '../service/EventDispatcher';
+import { EventDispatcherLoggerDecorator } from '../service/impl/EventDispatcherLoggerDecorator';
+import { NullEventDispatcher } from '../service/impl/NullEventDispatcher';
+import * as process from 'node:process';
 
 @Module({
   providers: [
@@ -13,8 +16,19 @@ import { DBConnection } from '../service/impl/DBConnection';
       useClass: ConsoleLogger,
     },
     {
+      provide: EventDispatcher,
+      inject: [Logger],
+      useFactory: (logger: Logger) => {
+        return new EventDispatcherLoggerDecorator(
+          new NullEventDispatcher(),
+          logger,
+        );
+      }
+    },
+    {
       provide: PostsApplicationService,
-      useFactory: () => {
+      inject: [EventDispatcher],
+      useFactory: (eventDispatcher: EventDispatcher) => {
         const conn = createConnection({
           host: process.env.MYSQL_HOST,
           user: process.env.MYSQL_USER,
@@ -24,6 +38,7 @@ import { DBConnection } from '../service/impl/DBConnection';
 
         return new PostsApplicationService(
           new MySQLPostsRepository(new DBConnection(conn)),
+          eventDispatcher,
         );
       },
       scope: Scope.REQUEST,

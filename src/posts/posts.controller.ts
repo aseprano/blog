@@ -42,8 +42,6 @@ export class PostsController {
 
   @Post()
   async create(@Body() body: any): Promise<any> {
-    console.log(body);
-
     try {
       const newId = await this.posts.create({
         properties: {
