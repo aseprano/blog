@@ -31,8 +31,6 @@ import { Connection } from 'mysql2/typings/mysql/lib/Connection';
       provide: DBConnection,
       scope: Scope.REQUEST,
       useFactory: () => {
-        console.log(`Creating new MySQL connection to "${process.env.MYSQL_HOST}"`);
-
         const conn = createConnection({
           host: process.env.MYSQL_HOST,
           user: process.env.MYSQL_USER,
