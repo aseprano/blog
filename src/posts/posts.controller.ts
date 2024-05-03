@@ -32,8 +32,14 @@ import { AllowedRoles } from '../guards/roles.decorator';
 import * as Roles from '../guards/roles.decorator';
 import { InvalidNumberOfTagsException } from '../domain/exceptions/InvalidNumberOfTagsException';
 import { BlogSearchService, SearchParams } from '../domain/app_services/BlogSearchService';
+import { CreatePost } from '../dto/CreatePost';
+import { CreatePostResponse } from '../dto/CreatePostResponse';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { UpdatePostDTO } from '../dto/UpdatePostDTO';
+import { FullBlogPostResponse } from '../dto/FullBlogPostResponse';
+import { TagsList } from '../dto/TagsList';
 
-@Controller('posts')
+@Controller('/posts')
 @UseGuards(RolesGuard)
 export class PostsController {
   public constructor(
@@ -43,7 +49,12 @@ export class PostsController {
   ) {}
 
   @Post()
-  async create(@Body() body: any): Promise<any> {
+  @ApiOperation({ description: 'Creates a new blog post' })
+  @ApiOkResponse({
+    status: 200,
+    type: CreatePostResponse,
+  })
+  async create(@Body() body: CreatePost): Promise<CreatePostResponse> {
     try {
       const newId = await this.posts.create({
         properties: {
@@ -78,12 +89,11 @@ export class PostsController {
   }
 
   @Put('/:id(\\d+)')
+  @ApiOperation({ description: 'Updates a blog post' })
   async update(
     @Param('id') id: string,
-    @Body() body: any,
+    @Body() body: UpdatePostDTO,
   ): Promise<void> {
-    this.logger.log(`Wanna update post ${id}`);
-
     try {
       await this.posts.update({
         id: new PostId(Number(id)),
@@ -109,10 +119,14 @@ export class PostsController {
   }
 
   @Get('/:id(\\d+)')
+  @ApiOperation({ description: 'View the content of a post' })
+  @ApiOkResponse({
+    status: 200,
+    type: FullBlogPostResponse,
+  })
   async viewPost(
     @Param('id') id: string,
-    @Body() body: any,
-  ): Promise<any> {
+  ): Promise<FullBlogPostResponse> {
     try {
       return await this.searchService.getPost(Number(id));
     } catch (error: any) {
@@ -125,6 +139,7 @@ export class PostsController {
   }
 
   @Get()
+  @ApiOperation({ description: 'Searches for posts in the blog' })
   async search(
     @Query('title') title?: string,
     @Query('category') category?: string,
@@ -144,7 +159,8 @@ export class PostsController {
   }
 
   @Delete('/:id(\\d+)')
-  @AllowedRoles([Roles.User])
+  @ApiOperation({ description: 'Deletes a post (admins only)' })
+  @AllowedRoles([Roles.Admin])
   async delete(@Param('id') id: string): Promise<void> {
     try {
       await this.posts.delete({
@@ -160,9 +176,10 @@ export class PostsController {
   }
 
   @Post('/:id(\\d+)/tags')
+  @ApiOperation({ description: 'Assigns new tags to a post' })
   async addTags(
     @Param('id') id: string,
-    @Body() body: any,
+    @Body() body: TagsList,
   ): Promise<any> {
     try {
       const postId = new PostId(Number(id));
@@ -188,9 +205,10 @@ export class PostsController {
   }
 
   @Delete('/:id(\\d+)/tags')
+  @ApiOperation({ description: 'Removes a list of tags from a post' })
   async removeTagsFromPost(
     @Param('id') id: string,
-    @Body() body: any,
+    @Body() body: TagsList,
   ): Promise<any> {
     const postId = new PostId(Number(id));
     this.logger.debug(`Wanna delete some tags from post ${postId}`);

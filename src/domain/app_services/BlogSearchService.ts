@@ -1,5 +1,6 @@
 import { Queryable } from '../../service/Queryable';
 import { BlogPostNotFoundException } from '../exceptions/BlogPostNotFoundException';
+import { FullBlogPostResponse } from '../../dto/FullBlogPostResponse';
 
 export interface SearchParams {
   readonly title?: string;
@@ -31,13 +32,13 @@ export interface BlogSearchResult {
 }
 
 export class BlogSearchService {
-  public constructor(
-    private readonly conn: Queryable,
-  ) {
-  }
+  public constructor(private readonly conn: Queryable) {}
 
-  public async getPost(id: number): Promise<BlogPostDTO> {
-    const posts = await this.conn.query(`SELECT p.*, c.label FROM posts p INNER JOIN categories c ON c.id = p.id_category WHERE p.id = ?`, [id]);
+  public async getPost(id: number): Promise<FullBlogPostResponse> {
+    const posts = await this.conn.query(
+      `SELECT p.*, c.label FROM posts p INNER JOIN categories c ON c.id = p.id_category WHERE p.id = ?`,
+      [id],
+    );
 
     if (!posts.length) {
       throw new BlogPostNotFoundException();
@@ -45,7 +46,10 @@ export class BlogSearchService {
 
     const row = posts[0];
 
-    const tags = await this.conn.query(`SELECT tag FROM post_tags WHERE id_post = ?`, [id]);
+    const tags = await this.conn.query(
+      `SELECT tag FROM post_tags WHERE id_post = ?`,
+      [id],
+    );
 
     return {
       id,
