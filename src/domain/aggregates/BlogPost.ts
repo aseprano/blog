@@ -1,5 +1,5 @@
 import { PostId } from '../value_objects/PostId';
-import { BlogPostProperties } from '../app_services/PostsApplicationService';
+import { BlogPostProperties } from '../app_services/PostsManagementService';
 import { PostTitle } from '../value_objects/PostTitle';
 import { PostContent } from '../value_objects/PostContent';
 import { PictureUrl } from '../value_objects/PictureUrl';

@@ -1,6 +1,6 @@
 import { ConsoleLogger, Logger, Module, Scope } from '@nestjs/common';
 import { PostsController } from './posts.controller';
-import { PostsApplicationService } from '../domain/app_services/PostsApplicationService';
+import { PostsManagementService } from '../domain/app_services/PostsManagementService';
 import { createConnection } from 'mysql2';
 import { MySQLPostsRepository } from '../domain/repositories/impl/MySQLPostsRepository';
 import { DBConnection } from '../service/impl/DBConnection';
@@ -8,6 +8,8 @@ import { EventDispatcher } from '../service/EventDispatcher';
 import { EventDispatcherLoggerDecorator } from '../service/impl/EventDispatcherLoggerDecorator';
 import { NullEventDispatcher } from '../service/impl/NullEventDispatcher';
 import * as process from 'node:process';
+import { BlogSearchService } from '../domain/app_services/BlogSearchService';
+import { Connection } from 'mysql2/typings/mysql/lib/Connection';
 
 @Module({
   providers: [
@@ -26,9 +28,9 @@ import * as process from 'node:process';
       }
     },
     {
-      provide: PostsApplicationService,
-      inject: [EventDispatcher],
-      useFactory: (eventDispatcher: EventDispatcher) => {
+      provide: DBConnection,
+      scope: Scope.REQUEST,
+      useFactory: () => {
         const conn = createConnection({
           host: process.env.MYSQL_HOST,
           user: process.env.MYSQL_USER,
@@ -36,13 +38,26 @@ import * as process from 'node:process';
           database: process.env.MYSQL_SCHEMA,
         });
 
-        return new PostsApplicationService(
-          new MySQLPostsRepository(new DBConnection(conn)),
+        return new DBConnection(conn);
+      },
+    },
+    {
+      provide: PostsManagementService,
+      inject: [EventDispatcher, DBConnection],
+      useFactory: (eventDispatcher: EventDispatcher, connection: DBConnection) => {
+        return new PostsManagementService(
+          new MySQLPostsRepository(connection),
           eventDispatcher,
         );
       },
-      scope: Scope.REQUEST,
     },
+    {
+      provide: BlogSearchService,
+      inject: [DBConnection],
+      useFactory: (connection: DBConnection) => {
+        return new BlogSearchService(connection);
+      },
+    }
   ],
   controllers: [PostsController],
 })

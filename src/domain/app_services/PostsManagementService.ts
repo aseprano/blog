@@ -12,6 +12,7 @@ import { EventDispatcher } from '../../service/EventDispatcher';
 import { PostCreated } from '../events/PostCreated';
 import { PostBoundToCategory } from '../events/PostBoundToCategory';
 import { TagsAddedToPost } from '../events/TagsAddedToPost';
+import { BlogSearchService } from './BlogSearchService';
 
 export interface BlogPostProperties {
   title: PostTitle;
@@ -39,7 +40,7 @@ export interface AlterTagsCommand {
   readonly tags: TagList;
 }
 
-export class PostsApplicationService {
+export class PostsManagementService {
   private MAX_RETRIES = 3;
 
   public constructor(
@@ -145,4 +146,5 @@ export class PostsApplicationService {
   public async delete(command: DeleteBlogPostCommand): Promise<void> {
     return this.repository.delete(command.id);
   }
+
 }

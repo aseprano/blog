@@ -11,9 +11,9 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
-  ForbiddenException,
+  ForbiddenException, Get, Query,
 } from '@nestjs/common';
-import { PostsApplicationService } from '../domain/app_services/PostsApplicationService';
+import { PostsManagementService } from '../domain/app_services/PostsManagementService';
 import { PostTitle } from '../domain/value_objects/PostTitle';
 import { PostContent } from '../domain/value_objects/PostContent';
 import { PictureUrl } from '../domain/value_objects/PictureUrl';
@@ -31,12 +31,14 @@ import { RolesGuard } from '../roles/roles.guard';
 import { AllowedRoles } from '../guards/roles.decorator';
 import * as Roles from '../guards/roles.decorator';
 import { InvalidNumberOfTagsException } from '../domain/exceptions/InvalidNumberOfTagsException';
+import { BlogSearchService, SearchParams } from '../domain/app_services/BlogSearchService';
 
 @Controller('posts')
 @UseGuards(RolesGuard)
 export class PostsController {
   public constructor(
-    private readonly posts: PostsApplicationService,
+    private readonly posts: PostsManagementService,
+    private readonly searchService: BlogSearchService,
     private readonly logger: Logger,
   ) {}
 
@@ -104,6 +106,41 @@ export class PostsController {
 
       throw error;
     }
+  }
+
+  @Get('/:id(\\d+)')
+  async viewPost(
+    @Param('id') id: string,
+    @Body() body: any,
+  ): Promise<any> {
+    try {
+      return await this.searchService.getPost(Number(id));
+    } catch (error: any) {
+      if (error instanceof BlogPostNotFoundException) {
+        throw new NotFoundException();
+      }
+
+      throw error;
+    }
+  }
+
+  @Get()
+  async search(
+    @Query('title') title?: string,
+    @Query('category') category?: string,
+    @Query('tag') tag?: string,
+  ): Promise<any> {
+    const searchParams: SearchParams = {
+      title,
+      category,
+      tag,
+    };
+
+    const result = await this.searchService.search(searchParams);
+
+    return {
+      posts: result,
+    };
   }
 
   @Delete('/:id(\\d+)')
